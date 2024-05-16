@@ -1,0 +1,480 @@
+{
+    "Measurements": [
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 10.027072381601808,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 181
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 10.023096927595628,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 182
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 10.01615185067919,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 183
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 10.006602075783373,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 184
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 9.995212889258042,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 185
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 9.981288475548503,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 186
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 9.96236789163775,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 7
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 6.5970541608700835,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 8
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 0.49178578886874774,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 9
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": -45.04047344961464,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 10
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 3.6440080461518933,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 171
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 8.302897043281606,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 172
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 9.963390162307647,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 353
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 9.980852877635844,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 354
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 9.995582217502792,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 355
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 10.007258320366644,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 356
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 10.016655858539592,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 357
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 10.023300923027946,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 358
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 10.027152031424594,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 359
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 10.028271830611985,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 180
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 9.962363076891537,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 187
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 6.597051796487394,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 188
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 0.4918239894668246,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 189
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": -45.041376301820435,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 190
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": -7.090228938497897,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 170
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": -7.089817434480099,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 350
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 3.6440545508565503,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 351
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 8.302908700005954,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 352
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 10.027072381601808,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 1,
+            "mesh_angle_up": 1
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 10.023096927595628,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 2,
+            "mesh_angle_up": 2
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 10.01615185067919,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 3,
+            "mesh_angle_up": 3
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 10.006602075783373,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 4,
+            "mesh_angle_up": 4
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 9.995212889258042,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 5,
+            "mesh_angle_up": 5
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 9.981288475548503,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 6,
+            "mesh_angle_up": 6
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 9.96236789163775,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 7,
+            "mesh_angle_up": 7
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 6.5970541608700835,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 8,
+            "mesh_angle_up": 8
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 0.49178578886874774,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 9,
+            "mesh_angle_up": 9
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": -45.04047344961464,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 10,
+            "mesh_angle_up": 10
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 9.963390162307647,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 173,
+            "mesh_angle_up": 173
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 9.980852877635844,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 174,
+            "mesh_angle_up": 174
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 9.995582217502792,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 175,
+            "mesh_angle_up": 175
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 10.007258320366644,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 176,
+            "mesh_angle_up": 176
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 10.016655858539592,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 177,
+            "mesh_angle_up": 177
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 10.023300923027946,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 178,
+            "mesh_angle_up": 178
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 10.027152031424594,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 179,
+            "mesh_angle_up": 179
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 10.028271830611985,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 180,
+            "mesh_angle_up": 180
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 10.027072381601808,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 181,
+            "mesh_angle_up": 181
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 10.023096927595628,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 182,
+            "mesh_angle_up": 182
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 10.01615185067919,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 183,
+            "mesh_angle_up": 183
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 10.006602075783373,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 184,
+            "mesh_angle_up": 184
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 9.995212889258042,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 185,
+            "mesh_angle_up": 185
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 9.981288475548503,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 186,
+            "mesh_angle_up": 186
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 9.962363076891537,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 187,
+            "mesh_angle_up": 187
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 6.597051796487394,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 188,
+            "mesh_angle_up": 188
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": 0.4918239894668246,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 189,
+            "mesh_angle_up": 189
+        },
+        {
+            "Obj_range": 1,
+            "RCS_without_const_dBsm": -45.041376301820435,
+            "Oversamp_factor": 30,
+            "rx_antenna_rad": 0.3,
+            "azimuth_angle": 2.864192368329293,
+            "mesh_angle_r": 190,
+            "mesh_angle_up": 190
+        }
+    ]
+}

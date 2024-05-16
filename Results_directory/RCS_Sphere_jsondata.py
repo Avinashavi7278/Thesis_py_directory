@@ -33,8 +33,8 @@ def plot_data(RCS_range, RCS_dBsm):
 RCS_range, RCS_dBsm , Angle , RCS_vs_angle = generate_data()
 
 # Filename to save the JSON data
-filename = 'D:/FAU Notes/4Master_Thesis/Simulation/Python_Directory/Results_directory/Sphere_RCS_vs_range.json'
-# plot_data(RCS_range, RCS_dBsm)
+# filename = 'D:/FAU Notes/4Master_Thesis/Simulation/Python_Directory/Results_directory/Sphere_RCS_vs_range.json'
+plot_data(RCS_range, RCS_dBsm)
 
 # Save the data to a JSON file
-save_to_json(RCS_range, RCS_dBsm, Angle, RCS_vs_angle, filename)
+# save_to_json(RCS_range, RCS_dBsm, Angle, RCS_vs_angle, filename)
