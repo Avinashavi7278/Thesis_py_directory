@@ -1,34 +1,61 @@
-import numpy as np
+import math
 
-def calculate_azimuth_angle(width, distance):
-    """
-    Calculate the azimuth angle to ensure the rays from the Tx antenna exactly cover the plate width.
+# Given values
+RCS_linear = 4.701194832873645e-05
+desired_RCS_dBsm = -20.5327
 
-    Parameters:
-    - width: float, the width of the plate in meters
-    - distance: float, the distance from the Tx antenna to the plate in meters
+# Calculate the constant k
+k = 10**(desired_RCS_dBsm / 10) / RCS_linear
 
-    Returns:
-    - theta_degrees: float, the azimuth angle in degrees
-    """
-    # Calculate the half-angle theta/2 in radians
-    theta_half_radians = np.arctan((width / 2) / distance)
+# Calculate the new RCS in linear
+RCS_new_linear = k * RCS_linear
+
+# Convert the new RCS in linear to dBsm
+RCS_new_dBsm = 10 * math.log10(RCS_new_linear)
+
+# Print the results
+print(f"Constant k: {k}")
+print(f"New RCS in linear: {RCS_new_linear}")
+print(f"New RCS in dBsm: {RCS_new_dBsm}")
+
+
+
+
+
+
+
+
+# import numpy as np
+
+# def calculate_azimuth_angle(width, distance):
+#     """
+#     Calculate the azimuth angle to ensure the rays from the Tx antenna exactly cover the plate width.
+
+#     Parameters:
+#     - width: float, the width of the plate in meters
+#     - distance: float, the distance from the Tx antenna to the plate in meters
+
+#     Returns:
+#     - theta_degrees: float, the azimuth angle in degrees
+#     """
+#     # Calculate the half-angle theta/2 in radians
+#     theta_half_radians = np.arctan((width / 2) / distance)
     
-    # Calculate the full theta in radians
-    theta_radians = 2 * theta_half_radians
+#     # Calculate the full theta in radians
+#     theta_radians = 2 * theta_half_radians
     
-    # Convert theta from radians to degrees
-    theta_degrees = np.degrees(theta_radians)
+#     # Convert theta from radians to degrees
+#     theta_degrees = np.degrees(theta_radians)
     
-    return theta_degrees
+#     return theta_degrees
 
-# Constants
-plate_width = 0.1  # in meters
-antenna_distance = 0.8  # in meters
+# # Constants
+# plate_width = 0.1  # in meters
+# antenna_distance = 0.8  # in meters
 
-# Calculate the azimuth angle
-theta = calculate_azimuth_angle(plate_width, antenna_distance)
-print(f"The azimuth angle should be set to {theta:.2f} degrees.")
+# # Calculate the azimuth angle
+# theta = calculate_azimuth_angle(plate_width, antenna_distance)
+# print(f"The azimuth angle should be set to {theta:.2f} degrees.")
 
 
 

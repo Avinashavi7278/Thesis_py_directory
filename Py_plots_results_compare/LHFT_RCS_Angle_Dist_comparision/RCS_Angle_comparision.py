@@ -3,6 +3,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 json_file=0
 
+
+def load_data_detailed(json_filename, mesh_angle_up):
+    # Load data from a JSON file and filter based on rx_radius
+    with open(json_filename, 'r') as file:
+        data = json.load(file)
+        measurements = [entry for entry in data['Measurements'] if entry['mesh_angle_up'] == mesh_angle_up]
+        return measurements
+    
 def load_data(json_file):
     # Load data from a JSON file
     with open(json_file, 'r') as file:
@@ -24,7 +32,7 @@ def extract_common_params(measurements):
 
 def plot_corner_angle(measurements):
     # Extract mesh_angle_up and RCS_without_const_dBsm from the measurements
-    theta = [entry['mesh_angle_up'] for entry in measurements]
+    theta = [entry['mesh_angle_r'] for entry in measurements]
     rcs_values = [entry['RCS_without_const_dBsm'] for entry in measurements]
 
     # Convert theta to radians
@@ -103,6 +111,34 @@ def plot_plate_angle(measurements):
         )
         plt.figtext(0.73, 0.9, specs_text, fontsize=12, bbox=dict(facecolor='white', alpha=0.4))
     plt.show()
+
+def plot_plate_diffu_angle(measurements):
+    # Extract Obj_range and RCS_without_const_dBsm from the measurements
+    theta = [entry['mesh_angle_r'] for entry in measurements]
+    rcs_values = [entry['RCS_without_const_dBsm'] for entry in measurements]
+
+    # Convert theta to radians
+    theta_rad = np.deg2rad(theta)
+    # theta_rad = [angle * (3.141592653589793 / 180.0) for angle in theta]
+
+    # Create a polar plot
+    plt.figure(figsize=(12, 6))
+    ax = plt.subplot(111, projection='polar')
+    ax.scatter(theta_rad, rcs_values, color='blue', s=5)
+    ax.set_title('plate RCS vs Angle ')
+    ax.set_ylim(-80, -20)
+    ax.grid(True)
+    common_params = extract_common_params(measurements)
+    if common_params:
+        specs_text = (
+            "Specifications:\n"
+            f"- Oversamp_factor: {common_params['Oversamp_factor']}\n"
+            f"- rx_antenna_rad: {common_params['rx_antenna_rad']}\n"
+            f"- azimuth_angle: {common_params['azimuth_angle']}"
+        )
+        plt.figtext(0.73, 0.9, specs_text, fontsize=12, bbox=dict(facecolor='white', alpha=0.4))
+    plt.show()
+
 # def plot_plate_angle(measurements):
 #     # Extract mesh_angle_r and RCS_without_const_dBsm from the measurements
 #     theta = [entry['mesh_angle_r'] for entry in measurements]
@@ -140,7 +176,7 @@ def plot_plate_angle(measurements):
 
 def main():
 
-    Object = "sphere".lower() #sphere, plate, corner
+    Object = "plate_diffu".lower() #sphere, plate, corner
 
     if Object == "sphere":
         json_file = 'D:/FAU Notes/4Master_Thesis/Simulation/Python_Directory/Py_plots_results_compare/LHFT_RCS_Angle_Dist_comparision/RCS_sphere_angle_results_auto.json'
@@ -148,14 +184,20 @@ def main():
         plot_sphere_angle(measurements)
 
     if Object == "corner":
+        mesh_angle_up = 45
         json_file = 'D:/FAU Notes/4Master_Thesis/Simulation/Python_Directory/Py_plots_results_compare/LHFT_RCS_Angle_Dist_comparision/RCS_corner_angle_metal_results_auto.json'
-        measurements = load_data(json_file)
+        measurements = load_data_detailed(json_file, mesh_angle_up)
         plot_corner_angle(measurements)
 
     if Object == "plate":
         json_file = 'D:/FAU Notes/4Master_Thesis/Simulation/Python_Directory/Py_plots_results_compare/LHFT_RCS_Angle_Dist_comparision/RCS_plate_angle_results_auto.json'
         measurements = load_data(json_file)
         plot_plate_angle(measurements)
+
+    if Object == "plate_diffu":
+        json_file = 'D:/FAU Notes/4Master_Thesis/Simulation/Python_Directory/Py_plots_results_compare/LHFT_RCS_Angle_Dist_comparision/RCS_plate_angle_results_auto_Hdiff.json'
+        measurements = load_data(json_file)
+        plot_plate_diffu_angle(measurements)
 
 if __name__ == "__main__":
     main()
