@@ -179,23 +179,23 @@ def main():
     Object = "plate_diffu".lower() #sphere, plate, corner
 
     if Object == "sphere":
-        json_file = 'D:/FAU Notes/4Master_Thesis/Simulation/Python_Directory/Py_plots_results_compare/LHFT_RCS_Angle_Dist_comparision/RCS_sphere_angle_results_auto.json'
+        json_file = 'D:/FAU Notes/4Master_Thesis/Simulation/Python_Directory/Py_plots_results_compare/LHFT_RCS_Results_Processing/RCS_sphere_angle_results_auto.json'
         measurements = load_data(json_file)
         plot_sphere_angle(measurements)
 
     if Object == "corner":
         mesh_angle_up = 45
-        json_file = 'D:/FAU Notes/4Master_Thesis/Simulation/Python_Directory/Py_plots_results_compare/LHFT_RCS_Angle_Dist_comparision/RCS_corner_angle_metal_results_auto.json'
+        json_file = 'D:/FAU Notes/4Master_Thesis/Simulation/Python_Directory/Py_plots_results_compare/LHFT_RCS_Results_Processing/RCS_corner_angle_metal_results_auto.json'
         measurements = load_data_detailed(json_file, mesh_angle_up)
         plot_corner_angle(measurements)
 
     if Object == "plate":
-        json_file = 'D:/FAU Notes/4Master_Thesis/Simulation/Python_Directory/Py_plots_results_compare/LHFT_RCS_Angle_Dist_comparision/RCS_plate_angle_results_auto.json'
+        json_file = 'D:/FAU Notes/4Master_Thesis/Simulation/Python_Directory/Py_plots_results_compare/LHFT_RCS_Results_Processing/RCS_plate_angle_results_auto.json'
         measurements = load_data(json_file)
         plot_plate_angle(measurements)
 
     if Object == "plate_diffu":
-        json_file = 'D:/FAU Notes/4Master_Thesis/Simulation/Python_Directory/Py_plots_results_compare/LHFT_RCS_Angle_Dist_comparision/RCS_plate_angle_results_auto_Hdiff.json'
+        json_file = 'D:/FAU Notes/4Master_Thesis/Simulation/Python_Directory/Py_plots_results_compare/LHFT_RCS_Results_Processing/RCS_plate_angle_results_auto_Hdiff.json'
         measurements = load_data(json_file)
         plot_plate_diffu_angle(measurements)
 
