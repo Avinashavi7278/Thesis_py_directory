@@ -139,6 +139,63 @@ def plot_plate_diffu_angle(measurements):
         plt.figtext(0.73, 0.9, specs_text, fontsize=12, bbox=dict(facecolor='white', alpha=0.4))
     plt.show()
 
+
+
+def plot_human_hori_RCS_angle(measurements):
+    # Extract Obj_range and RCS_without_const_dBsm from the measurements
+    theta = [entry['mesh_angle_r'] for entry in measurements]
+    rcs_values = [entry['RCS_with_const_dBsm'] for entry in measurements]
+
+    # Convert theta to radians
+    theta_rad = np.deg2rad(theta)
+    # theta_rad = [angle * (3.141592653589793 / 180.0) for angle in theta]
+
+    # Create a polar plot
+    plt.figure(figsize=(12, 6))
+    ax = plt.subplot(111, projection='polar')
+    ax.scatter(theta_rad, rcs_values, color='blue', s=5)
+    ax.set_title('Human RCS vs Angle (horizontal) ')
+    ax.set_ylim(-30, 0)
+    ax.grid(True)
+    common_params = extract_common_params(measurements)
+    if common_params:
+        specs_text = (
+            "Specifications:\n"
+            f"- Oversamp_factor: {common_params['Oversamp_factor']}\n"
+            f"- rx_antenna_rad: {common_params['rx_antenna_rad']}\n"
+            f"- azimuth_angle: {common_params['azimuth_angle']}"
+        )
+        plt.figtext(0.73, 0.9, specs_text, fontsize=12, bbox=dict(facecolor='white', alpha=0.4))
+    plt.show()
+
+def plot_human_verti_RCS_angle(measurements):
+    # Extract Obj_range and RCS_without_const_dBsm from the measurements
+    theta = [entry['mesh_angle_up'] for entry in measurements]
+    rcs_values = [entry['RCS_with_const_dBsm'] for entry in measurements]
+
+    # Convert theta to radians
+    theta_rad = np.deg2rad(theta)
+    # theta_rad = [angle * (3.141592653589793 / 180.0) for angle in theta]
+
+    # Create a polar plot
+    plt.figure(figsize=(12, 6))
+    ax = plt.subplot(111, projection='polar')
+    ax.scatter(theta_rad, rcs_values, color='blue', s=5)
+    ax.set_title('Human RCS vs Angle (verticle)')
+    ax.set_ylim(-30, 0)
+    ax.grid(True)
+    common_params = extract_common_params(measurements)
+    if common_params:
+        specs_text = (
+            "Specifications:\n"
+            f"- Oversamp_factor: {common_params['Oversamp_factor']}\n"
+            f"- rx_antenna_rad: {common_params['rx_antenna_rad']}\n"
+            f"- azimuth_angle: {common_params['azimuth_angle']}"
+        )
+        plt.figtext(0.73, 0.9, specs_text, fontsize=12, bbox=dict(facecolor='white', alpha=0.4))
+    plt.show()
+
+
 # def plot_plate_angle(measurements):
 #     # Extract mesh_angle_r and RCS_without_const_dBsm from the measurements
 #     theta = [entry['mesh_angle_r'] for entry in measurements]
@@ -176,7 +233,7 @@ def plot_plate_diffu_angle(measurements):
 
 def main():
 
-    Object = "plate_diffu".lower() #sphere, plate, corner
+    Object = "human_verti".lower() #sphere, plate, corner, human_verti, human_hori
 
     if Object == "sphere":
         json_file = 'D:/FAU Notes/4Master_Thesis/Simulation/Python_Directory/Py_plots_results_compare/LHFT_RCS_Results_Processing/RCS_sphere_angle_results_auto.json'
@@ -198,6 +255,16 @@ def main():
         json_file = 'D:/FAU Notes/4Master_Thesis/Simulation/Python_Directory/Py_plots_results_compare/LHFT_RCS_Results_Processing/RCS_plate_angle_results_auto_Hdiff.json'
         measurements = load_data(json_file)
         plot_plate_diffu_angle(measurements)
+
+    if Object == "human_hori":
+        json_file = 'D:/FAU Notes/4Master_Thesis/Simulation/Python_Directory/Py_plots_results_compare/LHFT_RCS_Results_Processing/Human_RCS_human_horizontal_angle_results.json'
+        measurements = load_data(json_file)
+        plot_human_hori_RCS_angle(measurements)
+
+    if Object == "human_verti":
+        json_file = 'D:/FAU Notes/4Master_Thesis/Simulation/Python_Directory/Py_plots_results_compare/LHFT_RCS_Results_Processing/Human_RCS_human_verticle_angle_results.json'
+        measurements = load_data(json_file)
+        plot_human_verti_RCS_angle(measurements)
 
 if __name__ == "__main__":
     main()

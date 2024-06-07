@@ -6,13 +6,16 @@ def plot_plate_size():
     # over sampling factor 60, Obj_range 2, diffusion 0.0
     plate_size = np.array([5, 7, 9, 11, 13, 15])
     FEKO_plate = np.array([ 4.9863, 10.8286, 15.1930, 18.6781, 21.5795, 24.0650])
+    Analy_solution = np.array([4.97, 10.82, 15.18, 18.67, 21.57, 24.06])
     LHFT_plate = np.array([ 4.9869, 10.8229, 15.1840, 18.6746, 21.5743, 24.0593])
 
 
 
     # Plot all four arrays in one single plot
     plt.plot(plate_size, FEKO_plate, label='plate in FEKO',  linestyle='-', marker='o', linewidth=3)
-    plt.plot(plate_size, LHFT_plate, label='plate in LHFT',  linestyle='-.', marker='x', linewidth=2)
+    plt.plot(plate_size, LHFT_plate, label='plate in LHFT (RCS_const = 0.3164)',  linestyle='-.', marker='x', linewidth=2)
+    plt.plot(plate_size, Analy_solution, label='plate analytical solution',  linestyle=':', marker='x', linewidth=2)
+    
 
 
     plt.title('RCS vs plate with different size')
@@ -22,6 +25,7 @@ def plot_plate_size():
 
     # Add a legend
     plt.legend()
+    plt.grid(True)
     # Show the plot
     plt.show()
 
@@ -34,8 +38,8 @@ def plot_corner_size():
     # LHFT_corner_using_ConstPlate2 = np.array([-2.0443, 3.7922, 8.1447, 11.6113, 14.4841, 16.9474])#5m range
     # Plot all four arrays in one single plot
     plt.plot(plate_size, FEKO_corner, label='Corner in FEKO', linestyle='-', marker='o', linewidth=3)
-    plt.plot(plate_size, LHFT_corner, label='Corner in LHFT with diff const', linestyle='--', marker='x', linewidth=2)
-    plt.plot(plate_size, LHFT_corner_using_ConstPlate1, label='Corner in LHFT with same const of plate')
+    plt.plot(plate_size, LHFT_corner, label='Corner in LHFT (RCS_const = 0.42465)', linestyle='--', marker='x', linewidth=2)
+    plt.plot(plate_size, LHFT_corner_using_ConstPlate1, label='Corner in LHFT (RCS_const = 0.3164)')
 
     plt.title('RCS vs corner with different size')
     plt.xlabel('Corner size in cm')
@@ -45,6 +49,7 @@ def plot_corner_size():
     # Add a legend
     plt.legend()
     # Show the plot
+    plt.grid(True)
     plt.show()
 
 
@@ -66,11 +71,12 @@ def plot_sphere_size():
     # Add a legend
     plt.legend()
     # Show the plot
+    plt.grid(True)
     plt.show()
 
 def main():
 
-    Object = "corner".lower() #sphere, plate, corner
+    Object = "plate".lower() #sphere, plate, corner
 
     if Object == "plate":
         plot_plate_size()

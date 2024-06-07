@@ -16,15 +16,14 @@ def extract_common_params(measurements):
     common_params = {
         "Obj_range": measurements[0].get("Obj_range", "N/A"),
         "Oversamp_factor": measurements[0].get("Oversamp_factor", "N/A"),
-        "mesh_angle_up": measurements[0].get("mesh_angle_up", "N/A"),
-        "azimuth_angle": measurements[0].get("azimuth_angle", "N/A")
+        "mesh_angle_up": measurements[0].get("mesh_angle_up", "N/A")
     }
     return common_params
 
 def plot_plate_dist(measurements):
     # Extract Obj_range and RCS_without_const_dBsm from the measurements
     rx_antenna_rad = [entry['rx_antenna_rad'] for entry in measurements]
-    rcs_values = [entry['RCS_without_const_dBsm'] for entry in measurements]
+    rcs_values = [entry['RCS_with_const_dBsm'] for entry in measurements]
 
     # Create a scatter plot
     plt.figure(figsize=(10, 5))
@@ -40,7 +39,7 @@ def plot_plate_dist(measurements):
         specs_text = (
             "Specifications:\n"
             f"- Oversamp_factor: {common_params['Oversamp_factor']}\n"
-            f"- azimuth_angle: {common_params['azimuth_angle']}\n"
+            f"- Plate size is 5cm\n"
             f"- Obj_range: {common_params['Obj_range']}"
         )
         plt.figtext(0.73, 0.9, specs_text, fontsize=12, bbox=dict(facecolor='white', alpha=0.4))
@@ -76,11 +75,11 @@ def plot_corner_dist(measurements):
 
 
 def main():
-    Object = "corner".lower()  # sphere, plate, corner
+    Object = "plate".lower()  # sphere, plate, corner
     
     if Object == "plate":
         json_file = 'D:/FAU Notes/4Master_Thesis/Simulation/Python_Directory/Py_plots_results_compare/LHFT_RCS_Results_Processing/RCS_plate_dist_Rxantenna.json'
-        Oversamp_factor = 60  # Specify the desired Oversamp_factor value here
+        Oversamp_factor = 30  # Specify the desired Oversamp_factor value here
         Obj_range = 3
         measurements = load_data(json_file, Obj_range, Oversamp_factor)
         plot_plate_dist(measurements)

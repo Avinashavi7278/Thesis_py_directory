@@ -1,59 +1,38 @@
-      # azimuth_angle_rad = np.deg2rad(azimuth_angle)
-      # for i in range(iterations):
-      #    Obj_range += 1
-      #    From_vector = np.array([Obj_range, 0.0, 0.0])
-      #    print(f"The Obj_range is {Obj_range:.2f}")
-      #    RCS_without_const_dBsm = simulate_plate(image_width, image_height, Oversamp_factor, Wavelength, 
-      #                 rx_antenna_rad, From_vector, look_at_front, vec_up, azimuth_angle,
-      #                 mesh_angle_r, Obj_range, render_mode_type)
-      #    time.sleep(15)
-
-
-
 import numpy as np
-import math
-# Pi_val = (math.pi)
-# print(Pi_val)
-# gain_RCS = (4*np.pi)/(3.58**2)
-# print(gain_RCS)
-azimuth_angle_rad = np.deg2rad(2.86)
-print(azimuth_angle_rad)
-# Object = "plAte".lower()
-# print(Object)
-# import numpy as np
+from scipy.integrate import dblquad
+import matplotlib.pyplot as plt
 
-# def calculate_rcs(Pt, Pr, r, theta, k):
-#     """
-#     Calculate the Radar Cross Section based on given parameters.
 
-#     Parameters:
-#     - Pt: float, transmitted power
-#     - Pr: float, received power
-#     - r: float, range (distance to the target)
-#     - theta: float, azimuth angle in degrees
-#     - k: float, scaling factor for RCS_const
+# Single azimuth and elevation angles in radians
+azimuth_angle = np.radians(1)  # Example single value, converted to radians
+elevation_angle = np.radians(1)  # Example single value, converted to radians
 
-#     Returns:
-#     - RCS: float, calculated Radar Cross Section
-#     """
-#     # Convert theta from degrees to radians for computation
-#     theta_rad = np.deg2rad(theta)
+# Perform the double integral over the angular extent
+effective_area, error = dblquad(lambda theta, phi:  np.cos(theta),
+                                -azimuth_angle / 2, azimuth_angle / 2,  # Azimuth angle range
+                                lambda x: -elevation_angle / 2, lambda x: elevation_angle / 2)  # Elevation angle range
 
-#     # Calculate RCS_const inversely proportional to theta
-#     RCS_const = k / theta_rad if theta_rad != 0 else float('inf')
-#     print(RCS_const)
+# Check if the effective area is not zero to avoid division by zero
+if effective_area == 0:
+    raise ValueError("Effective area calculated to be zero, which will cause a division by zero error in gain calculation.")
 
-#     # Calculate RCS using the formula
-#     RCS = (Pr / Pt) * ((4 * np.pi * r**2)**2) * RCS_const
+print(f"Effective Area: {effective_area:.4f} square meters")
 
-#     return RCS
+# Calculate the gain factor
+gain_factor = (4 * np.pi) / effective_area
 
-# # Example usage
-# Pt = 1.0  # example transmitted power
-# Pr = 0.01  # example received power
-# r = 100.0  # example range
-# theta = 10*2  # example azimuth angle
-# k = 1000  # example scaling factor
+print(f"Gain Factor: {gain_factor:.4f}")
 
-# rcs_value = calculate_rcs(Pt, Pr, r, theta, k)
-# print(f"RCS value: {rcs_value}")
+# Plotting for visualization (though with a single point it might be less meaningful)
+phi = np.linspace(-azimuth_angle / 2, azimuth_angle / 2, 25)
+theta = np.linspace(-elevation_angle / 2, elevation_angle / 2, 25)
+phi_grid, theta_grid = np.meshgrid(phi, theta)
+rcs_dbsm_grid = np.full_like(phi_grid, 10)  # Create a grid of the RCS value in dBsm for visualization
+
+# plt.figure(figsize=(12, 6))
+# plt.pcolormesh(np.degrees(phi_grid), np.degrees(theta_grid), rcs_dbsm_grid, shading='auto', cmap='viridis')
+# plt.colorbar(label='RCS (dBsm)')
+# plt.xlabel('Azimuth Angle (degrees)')
+# plt.ylabel('Elevation Angle (degrees)')
+# plt.title('RCS vs Azimuth and Elevation Angles')
+# plt.show()
