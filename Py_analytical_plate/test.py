@@ -1,28 +1,19 @@
 import numpy as np
-import matplotlib.pyplot as plt
-from scipy.interpolate import interp1d
+from scipy.integrate import dblquad
 
-# Example data points
-x = np.array([1, 2, 4, 5, 8])
-y = np.array([1, 4, 9, 16, 25])
+# Define the limits for theta and phi
+theta = 0.01
+phi = 0.01
 
-# Quadratic spline interpolation
-quadratic_interpolation = interp1d(x, y, kind='quadratic')
+# Define the integrand
+def integrand(theta, phi):
+    return np.cos(theta)
 
-# Generate new x values for a smooth curve
-x_new = np.linspace(x.min(), x.max(), 500)
-y_new = quadratic_interpolation(x_new)
+# Perform the double integration
+A_eff, _ = dblquad(integrand, -phi/2, phi/2, lambda phi: -theta/2, lambda phi: theta/2)
 
-# Plot the original data points
-plt.scatter(x, y, color='red', label='Original Points')
+# Calculate the gain factor
+G = (4 * np.pi) / A_eff
 
-# Plot the interpolated smooth curve
-plt.plot(x_new, y_new, color='blue', label='Quadratic Spline Interpolation')
-
-# Labels and title
-plt.xlabel('X')
-plt.ylabel('Y')
-plt.title('Parabolic Arc through Interpolated Points')
-plt.legend()
-plt.grid(True)
-plt.show()
+print(f"Effective Area (A_eff): {A_eff}")
+print(f"Gain Factor (G): {G}")

@@ -1,0 +1,48 @@
+import numpy as np
+from scipy.integrate import dblquad
+import matplotlib.pyplot as plt
+
+# Function to perform the double integration
+def calculate_A_eff(theta, phi):
+    def integrand(theta, phi):
+        return np.cos(theta)
+    
+    A_eff, _ = dblquad(integrand, -phi/2, phi/2, lambda phi: -theta/2, lambda phi: theta/2)
+    return A_eff
+
+# Initialize lists to store results
+values = np.arange(1, 61, 1)
+A_effs = []
+Gs = []
+
+# Calculate A_eff and G for each pair of theta and phi
+for value in values:
+    theta = np.deg2rad(value)  # Convert to radians
+    print(theta)
+    phi = np.radians(value)  # Convert to radians
+    A_eff = calculate_A_eff(theta, phi)
+    
+    G = (4 * np.pi) / A_eff
+    print(f"The gain values are {G:.2f}")
+    gain_factor_dBsm = 10 * np.log10(G)
+    print(f"The gain values are {gain_factor_dBsm:.2f}")
+
+    A_effs.append(A_eff)
+    Gs.append(G)
+
+
+
+
+# Plotting the results
+plt.figure(figsize=(10, 6))
+
+plt.plot(values, A_effs, label='A_eff', color='b')
+plt.plot(values, Gs, label='Gain Factor (G)', color='r')
+
+plt.xlabel('Azimuth and Elevation (degrees)')
+plt.ylabel('Values')
+plt.title('A_eff and Gain Factor (G) vs Azimuth and Elevation')
+plt.legend()
+plt.grid(True)
+plt.show()
+

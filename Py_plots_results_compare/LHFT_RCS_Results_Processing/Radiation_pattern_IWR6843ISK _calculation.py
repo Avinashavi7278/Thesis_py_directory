@@ -31,8 +31,10 @@ def read_data(txt_file):
     return np.array(angles_rx1), np.array(values_rx1), np.array(angles_rx2), np.array(values_rx2), np.array(angles_rx3), np.array(values_rx3), np.array(angles_rx4), np.array(values_rx4)
 
 # Path to the text file
-azimuth_txt_file = 'D:/FAU Notes/4Master_Thesis/Simulation/Python_Directory/LHFT_PyTest/azimuth_radiation_pattern.txt'
-elevation_txt_file = 'D:/FAU Notes/4Master_Thesis/Simulation/Python_Directory/LHFT_PyTest/elevation_radiation_pattern.txt'
+azimuth_txt_file = 'D:/FAU Notes/4Master_Thesis/Simulation/Python_Directory/Py_plots_results_compare/LHFT_RCS_Results_Processing/azimuth_radiation_pattern.txt'
+elevation_txt_file = 'D:/FAU Notes/4Master_Thesis/Simulation/Python_Directory/Py_plots_results_compare/LHFT_RCS_Results_Processing/elevation_radiation_pattern.txt'
+Radiation_pattern_file = 'D:/FAU Notes/4Master_Thesis/Simulation/Python_Directory/Py_plots_results_compare/LHFT_RCS_Results_Processing/Radiation_pattern_new.txt'
+
 
 # Read the data from the file
 az_angles_rx1, az_values_rx1, az_angles_rx2, az_values_rx2, az_angles_rx3, az_values_rx3, az_angles_rx4, az_values_rx4 = read_data(azimuth_txt_file)
@@ -112,6 +114,32 @@ def apply_window_function_near_center(matrix, center_row, center_col):
     return smoothed_matrix
 
 matrix = apply_window_function_near_center(matrix, center_row, center_col)
+
+
+
+
+# # Prepare the data for saving
+# azimuths = np.linspace(-60, 60, 120)
+# elevations = np.linspace(-30, 30, 60)
+# data_to_save = []
+
+# for i in range(120):
+#     for j in range(60):
+#         theta = azimuths[i]
+#         phi = elevations[j]
+#         value = matrix[i, j]
+#         data_to_save.append(f"{theta:.3f}       {phi:.3f}      {value:.3e}")
+
+# # Save the data to a text file
+# header = "Theta [deg.]  Phi [deg.]  Abs(Grlz)[dBi   ]\n" + "-"*46
+# with open(Radiation_pattern_file, "w") as file:
+#     file.write(header + "\n")
+#     for line in data_to_save:
+#         file.write(line + "\n")
+
+
+
+
 
 # Print the highest values and their indices
 max_az_value = np.max(matrix[:, center_col])
