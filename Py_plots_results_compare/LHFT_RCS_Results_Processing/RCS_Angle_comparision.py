@@ -196,6 +196,52 @@ def plot_human_verti_RCS_angle(measurements):
     plt.show()
 
 
+def extract_common_params(measurements):
+    # Extract common parameters from the first relevant entry
+    for entry in measurements:
+        if entry.get('Specification') == 'RCS vs angle for normal plate':
+            common_params = {
+                "Oversamp_factor": entry.get("Oversamp_factor"),
+                "rx_antenna_rad": entry.get("rx_antenna_rad"),
+                "azimuth_angle": entry.get("azimuth_angle")
+            }
+            return common_params
+    return None
+
+def plot_plate_cube_diffu_angle(measurements):
+    # Extract data for plotting
+    mesh_angle_r = []
+    RCS_with_const_dBsm = []
+
+    for entry in measurements:
+        if entry.get('Specification') == 'RCS vs angle for cube as a plate':
+            mesh_angle_r.append(entry.get('mesh_angle_r'))
+            RCS_with_const_dBsm.append(entry.get('RCS_with_const_dBsm'))
+
+    # Convert theta to radians
+    theta_rad = np.deg2rad(mesh_angle_r)
+
+    # Create a polar plot
+    plt.figure(figsize=(12, 6))
+    ax = plt.subplot(111, projection='polar')
+    ax.scatter(theta_rad, RCS_with_const_dBsm, color='blue', s=5)
+    ax.set_title('Cube RCS vs Angle')
+    ax.set_ylim(-200, -20)
+    ax.grid(True)
+
+    # Extract common parameters for displaying
+    common_params = extract_common_params(measurements)
+    if common_params:
+        specs_text = (
+            "Specifications:\n"
+            f"- Oversamp_factor: {common_params['Oversamp_factor']}\n"
+            f"- rx_antenna_rad: {common_params['rx_antenna_rad']}\n"
+        )
+        plt.figtext(0.73, 0.9, specs_text, fontsize=12, bbox=dict(facecolor='white', alpha=0.4))
+    
+    plt.show()
+
+
 # def plot_plate_angle(measurements):
 #     # Extract mesh_angle_r and RCS_without_const_dBsm from the measurements
 #     theta = [entry['mesh_angle_r'] for entry in measurements]
@@ -233,7 +279,7 @@ def plot_human_verti_RCS_angle(measurements):
 
 def main():
 
-    Object = "human_verti".lower() #sphere, plate, corner, human_verti, human_hori
+    Object = "plate_cube".lower() #sphere, plate, corner, human_verti, human_hori
 
     if Object == "sphere":
         json_file = 'D:/FAU Notes/4Master_Thesis/Simulation/Python_Directory/Py_plots_results_compare/LHFT_RCS_Results_Processing/RCS_sphere_angle_results_auto.json'
@@ -265,6 +311,12 @@ def main():
         json_file = 'D:/FAU Notes/4Master_Thesis/Simulation/Python_Directory/Py_plots_results_compare/LHFT_RCS_Results_Processing/Human_RCS_human_verticle_angle_results.json'
         measurements = load_data(json_file)
         plot_human_verti_RCS_angle(measurements)
+
+    if Object == "plate_cube":
+        json_file = 'D:/FAU Notes/4Master_Thesis/Simulation/Python_Directory/Py_plots_results_compare/LHFT_RCS_Results_Processing/RCS_plate_angle_results_auto_Hdiff.json'
+        measurements = load_data(json_file)
+        plot_plate_cube_diffu_angle(measurements)
+
 
 if __name__ == "__main__":
     main()

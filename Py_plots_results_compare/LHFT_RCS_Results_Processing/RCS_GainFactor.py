@@ -103,7 +103,7 @@ def plot_plate_gain_compare(measurements):
 
     # Calculate the offset
     offset = rcs_without_gain[0] - rcs_with_gain[0]
-    print(f"the offset is {offset:4f}")
+    print(f"the offset is {offset}")
     # Apply the offset to the RCS with gain data
     rcs_with_gain_adjusted = [x + offset for x in rcs_with_gain]
 

@@ -166,8 +166,49 @@ def plot_corner_dist(measurements):
         plt.figtext(0.73, 0.9, specs_text, fontsize=12, bbox=dict(facecolor='white', alpha=0.4))
     plt.show()
 
+
+def plot_corner_multipath_dist(measurements):
+    # Extract data for plotting
+    # Extract data for plotting
+    Obj_range = []
+    RCS_without_gnd = []
+    Obj_range_gnd = []
+    rcs_with_gnd = []
+
+    for entry in measurements:
+        if entry['Specification'] == 'RCS corner multipath without ground':
+            Obj_range.append(entry['Obj_range'])
+            RCS_without_gnd.append(entry['RCS_with_const_dBsm'])
+        elif entry['Specification'] == 'RCS corner multipath with ground':
+            Obj_range_gnd.append(entry['Obj_range'])
+            rcs_with_gnd.append(entry['RCS_with_const_dBsm'])
+
+    # Plotting
+    plt.figure(figsize=(12, 6))
+    plt.plot(Obj_range, RCS_without_gnd, label='RCS Corner Without Ground', marker='o', linewidth=1.5, markersize=4)
+    plt.plot(Obj_range_gnd, rcs_with_gnd, label='RCS Corner With Ground', marker='s', linewidth=1.5, markersize=4)
+    
+
+    plt.xlabel('Range in m ')
+    plt.ylabel('RCS (dBsm)')
+    plt.title('RCS vs range for corner multipath')
+    plt.ylim(-15, 20)
+    plt.legend()
+    plt.grid(True)
+    common_params = extract_common_params(measurements)
+    if common_params:
+        specs_text = (
+            "Specifications:\n"
+            f"- Oversamp_factor: {common_params['Oversamp_factor']}\n"
+            f"- rx_antenna_rad: {common_params['rx_antenna_rad']}\n"
+            f"- azimuth_angle: {common_params['azimuth_angle']}"
+        )
+        plt.figtext(0.73, 0.9, specs_text, fontsize=12, bbox=dict(facecolor='white', alpha=0.4))
+    plt.show()
+
+
 def main():
-    Object = "corner".lower() #sphere, plate, corner
+    Object = "corner_multi".lower() #sphere, plate, corner
     rx_antenna_rad = 0.3
     Oversamp_factor = 110 #choose 30, 60 for diffusion, but for better results choose 90 only with rx_antenna_rad = 0.3, 110 for corner
 
@@ -180,6 +221,13 @@ def main():
         json_file = 'D:/FAU Notes/4Master_Thesis/Simulation/Python_Directory/Py_plots_results_compare/LHFT_RCS_Results_Processing/Corner_RCS_Dist_results.json'
         measurements = load_data_detailed(json_file, rx_antenna_rad, Oversamp_factor)
         plot_corner_dist(measurements)
+
+    if Object == "corner_multi":
+        rx_antenna_rad = 0.3
+        Oversamp_factor = 60
+        json_file = 'D:/FAU Notes/4Master_Thesis/Simulation/Python_Directory/Py_plots_results_compare/LHFT_RCS_Results_Processing/RCS_corner_multipath_dist.json'
+        measurements = load_data_detailed(json_file, rx_antenna_rad, Oversamp_factor)
+        plot_corner_multipath_dist(measurements)
 
     if Object == "plate":
         json_file = 'D:/FAU Notes/4Master_Thesis/Simulation/Python_Directory/Py_plots_results_compare/LHFT_RCS_Results_Processing/Plate_RCS_Dist_results.json'
