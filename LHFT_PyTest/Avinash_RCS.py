@@ -1,3 +1,973 @@
+28/6/2024
+import os
+import sys
+python_file_directory = os.path.dirname(os.path.abspath(__file__))
+upper_directory = python_file_directory + "/../"
+sys.path.append(upper_directory)
+import json
+from scipy.integrate import dblquad
+from radar_ray_python.Persistence import save_radar_measurement_as_binary
+from radar_ray_python.Renderer import RenderMode, Renderer, RayChannelInfo
+from radar_ray_python.Mesh import Mesh
+from radar_ray_python.RxAntenna import RxAntenna
+from radar_ray_python.TxAntenna import TxAntenna
+from radar_ray_python.RadiationPattern import *
+from radar_ray_python.Material import MaterialDielectric, MaterialLambertian, MaterialMetal, MaterialMixed
+import radar_ray_python as raray
+import matplotlib.pyplot as plt
+import numpy as np
+import time
+from PIL import Image
+import matplotlib as mpl
+mpl.rc('font',family='Times New Roman')
+
+import scipy.io as sio
+
+from radar_ray_python.data import *
+from radar_ray_python.Persistence import load_mesh_normal_from_obj
+
+# Enter the type of the object (plate, sphere, corner)
+Object = 0
+graph_render_mode = 0
+
+
+#Parameters for incident rays 
+image_width = 0
+image_height = 0
+Oversamp_factor = 0
+Wavelength = 0.0
+
+# variables to change the range and theta
+Obj_range = 0.0
+range_rcs = 0.0
+degree_interval = 0.0
+rx_antenna_rad = 0.0
+mesh_angle_r = 0
+mesh_angle_up = 0
+diff_const = 0
+RCS_const = 0
+RCS_with_const = 0
+
+
+azimuth_angle = 0
+look_at_front =  np.array([0.0, 0, 0.0])
+vec_up = np.array([0.0, 0.0, 0.0])
+
+def load_Object(renderer, material_dir, obj_filename, mesh_angle_r, mesh_angle_up, diff_const):
+   mesh_list, obj_mat_list = load_mesh_normal_from_obj(obj_filename, material_dir)
+
+   for i, obj_mat in enumerate(obj_mat_list):
+      mesh = mesh_list[i]
+      if "corner" in obj_mat.name.lower():
+         mesh_mat = MaterialMixed(obj_mat.diffuse, diff_const)
+         mesh.set_id(0)
+      elif "ground" in obj_mat.name.lower():
+         mesh_mat = MaterialMixed(obj_mat.diffuse, diff_const)
+         mesh.set_id(1)
+      else:
+         mesh_mat = MaterialMixed(obj_mat.diffuse, 0.1)
+         mesh.set_id(2)
+      mesh.set_material(mesh_mat)
+      mesh.rotate([1.0, 0.0, 0.0],np.deg2rad(mesh_angle_up))
+      mesh.rotate([0.0, 0.0, 1.0],np.deg2rad(mesh_angle_r))
+      renderer.add_geometry_object(mesh)
+
+   print("Mesh loading completed")
+
+def calculate_azimuth_angle(obj_width, range_rcs):
+    # Calculate the half-angle theta/2 in radians
+    theta_half_radians = np.arctan((obj_width / 2) / range_rcs)
+    # Calculate the full theta in radians
+    azimuth_radians = 2 * theta_half_radians
+    # Convert theta from radians to degrees
+    azimuth_angle = np.degrees(azimuth_radians)
+    return azimuth_angle
+
+def calculate_elevation_angle(obj_length, range_rcs):
+    # Calculate the half-angle theta/2 in radians
+    theta_half_radians = np.arctan((obj_length / 2) / range_rcs)
+    # Calculate the full theta in radians
+    elevation_radians = 2 * theta_half_radians
+    # Convert theta from radians to degrees
+    elevation_angle = np.degrees(elevation_radians)
+    return elevation_angle
+
+
+def load_antennas_for_imaging_iwr6843AOP(render_pos, look_at_front, vec_up,
+                                         radiation_pattern, phi_axis, theta_axis, Wavelength, rx_antenna_rad, azimuth_angle, elevation_angle):
+
+   tx_antennas = list()
+   rx_antennas = list()
+
+   #construct the antenna array
+   num_tx = 3
+   num_rx = 4
+   tx_antenna_pos_offset_1 = np.array([-Wavelength,0,0])
+   tx_antenna_pos_offset_2 = np.array([0,-Wavelength,0])
+   tx_antenna_pos_offset_3 = np.array([0,0,0])
+   tx_offsets = [tx_antenna_pos_offset_1, tx_antenna_pos_offset_2, tx_antenna_pos_offset_3]
+   rx_antenna_pos_offset_1 = np.array([-Wavelength,-1.5*Wavelength,0])
+   rx_antenna_pos_offset_2 = np.array([-1.5*Wavelength,-1.5*Wavelength,0])
+   rx_antenna_pos_offset_3 = np.array([-1.5*Wavelength,-Wavelength,0])
+   rx_antenna_pos_offset_4 = np.array([-Wavelength,-Wavelength,0])
+   rx_offsets = [rx_antenna_pos_offset_1, rx_antenna_pos_offset_2, rx_antenna_pos_offset_3, rx_antenna_pos_offset_4]
+
+   for i in range(num_tx):
+      tx_antenna_pos = render_pos + tx_offsets[i] #for i= 0 [0.2951,0,0]
+      #tx_antenna_pos = tx_antennas_pos[i] + camera_pos_front
+      tx_antenna = TxAntenna(tx_antenna_pos)
+      tx_antenna.set_look_at(look_at_front)
+      tx_antenna.set_up(vec_up)
+      tx_antenna.set_azimuth(np.deg2rad(azimuth_angle))
+      tx_antenna.set_elevation(np.deg2rad(elevation_angle))
+      tx_antenna.set_radiation_pattern(radiation_pattern, phi_axis, theta_axis)
+      tx_antennas.append(tx_antenna)
+         
+   # add rx antenna pos 
+   for i in range(num_rx):
+      rx_antenna_pos = render_pos + rx_offsets[i]
+      rx_antenna = RxAntenna(rx_antenna_pos, rx_antenna_rad)
+      rx_antenna.set_look_at(look_at_front)
+      rx_antenna.set_up(vec_up)
+      rx_antenna.set_radiation_pattern(radiation_pattern, phi_axis, theta_axis)
+      rx_antennas.append(rx_antenna)
+
+   return tx_antennas, rx_antennas
+
+def simulate_plate(image_width, image_height, Oversamp_factor, Wavelength, 
+                      rx_antenna_rad, From_vector, look_at_front, vec_up, azimuth_angle, elevation_angle,
+                      mesh_angle_r, mesh_angle_up, Obj_range, render_mode_type, diff_const, RCS_const):
+   renderer = Renderer()
+   render_mode = getattr(RenderMode, render_mode_type)
+   print("function call successful")
+   # load mesh from outside
+
+   script_directory = os.path.dirname(__file__)
+   content_directory = os.path.join(script_directory, "../example-files/Avinash_RCS/Plate/")
+   obj_filename = os.path.join(content_directory, "Plate_high_roughness_with_thickness.obj")#Plate_high_roughness_metal, Plate_high_roughness_flipped
+   #print("start loading campus scene")
+   load_Object(renderer, content_directory, obj_filename, mesh_angle_r, mesh_angle_up, diff_const)
+
+   radiation_pattern_filename = os.path.join(script_directory, "../example-files/Radiation_pattern_new.txt")   
+   radiation_pattern, phi_axis, theta_axis = load_radiation_pattern_from_cst(radiation_pattern_filename)
+   # plot_radiation_pattern_3d(radiation_pattern, phi_axis, theta_axis, subsampling_factor=8)
+   # plt.show()
+
+
+   if render_mode == RenderMode.RENDER_MODE_GRAPHICS:
+      # From Vector (from_vec) - This is the position of the camera itself. You need to place it at a suitable distance to view the plate clearly. Assuming the plate is at the origin and the camera needs to be positioned directly in front of it, you could set the camera at a position along the z-axis.
+      # At Vector (at_vec) - This vector points to where the camera is looking at. Since the plate is at the origin and we want the camera to focus there
+      # Up Vector (up_vec) - This defines the upward direction relative to the camera's point of view. Since the plate is rotated 90 degrees, and assuming the rotation is about the y-axis making the top of the plate align with the x-axis, you would typically want the up vector to align with the y-axis to keep the camera's view upright
+      # set_camera ([move camera with x for f and b, y to l and r, z for up and d ],[Looking camera at x f and b, y l and r, z up and down(our case looking origin000)],[up_vector])
+      renderer.set_camera(From_vector, look_at_front, vec_up)
+      renderer.set_render_mode(render_mode)
+      renderer.set_image_size(image_width, image_height)
+      renderer.set_oversampling_factor(Oversamp_factor)
+      renderer.initialize()
+      renderer.render()
+      image = renderer.get_image()
+      image_array = Image.fromarray(image)
+      render_directory = os.path.join(script_directory, "../example-scripts/Avinash_render_images/")
+      print("Image stored in RCS_cube_plate")
+      os.makedirs(render_directory, exist_ok=True)
+
+      image_path = os.path.join(render_directory, "RCS_cube_plate.png")
+
+      image_array.save(image_path)
+
+   elif render_mode == RenderMode.RENDER_MODE_RAYTARGET_COMP:
+      # This mode supports accurate Doppler and Radiation-Patterns
+      
+      tx_antennas, rx_antennas = load_antennas_for_imaging_iwr6843AOP(From_vector, look_at_front, vec_up,
+                                         radiation_pattern, phi_axis, theta_axis, Wavelength, rx_antenna_rad, azimuth_angle, elevation_angle)
+      print("Loading antenna for imaging completed")
+      renderer.add_rx_antenna(rx_antennas[0])
+      renderer.add_tx_antenna(tx_antennas[0])
+      renderer.set_ray_depth(4)
+      renderer.set_number_sequences(10)
+      renderer.set_render_mode(render_mode)
+      renderer.set_image_size(image_width, image_height)
+      renderer.set_oversampling_factor(Oversamp_factor)
+      time_start = time.time()
+      renderer.initialize()
+      renderer.render()
+      print("Render complete")
+      renderer.create_channel_info()
+      time_end = time.time()
+      print(f"ray tracing simulation took: {time_end - time_start:.2f} seconds")
+      ray_channel_info = renderer.get_channel_info()
+      time_start = time.time()
+      trace_data = create_trace_data_from_ray_channel_info(ray_channel_info, tx_antennas, rx_antennas, apply_radiation_pattern=True, all_radiation_patterns_equal=True)
+      time_end = time.time()
+      print(f"creating trace data took: {time_end - time_start:.2f} seconds")
+
+      number_rays = trace_data.traces_dict[0,0].shape[1]
+      print(f"received {number_rays} rays")
+
+      Pt = (image_width*image_height)*Oversamp_factor
+      Power_ratio = (number_rays/Pt)**2
+      RCS_without_const = Power_ratio*(4*np.pi*(Obj_range**2))**2
+      RCS_with_const = RCS_without_const * RCS_const
+
+      print(f"azimuth in degree  : {azimuth_angle:.8f} ")
+      print(f"elevation in degree  : {elevation_angle:.8f} ")
+
+      azimuth_radi = azimuth_angle * (np.pi / 180)
+      elevation_radi = elevation_angle * (np.pi / 180)
+
+      print(f"azimuth in radians  : {azimuth_radi:.8f} ")
+      print(f"elevation in radians  : {elevation_radi:.8f} ")
+      # For the effective area, performing double integral over azimuth and elevation, which provides effective area in the omni directional sphere 
+      # effective_area, error = dblquad(lambda theta, phi: np.sin(theta),
+      #                           0, 2 * azimuth_radi,  # Outer integral bounds (azimuth)
+      #                           lambda x: 0, lambda x: 2 * elevation_radi)  # Inner integral bounds (elevation)
+
+      # effective_area, error = dblquad(lambda phi,theta:  np.cos(theta),
+      #                           -azimuth_radi / 2, azimuth_radi / 2,  # Azimuth angle range
+      #                           lambda x: -elevation_radi / 2, lambda x: elevation_radi / 2)  # Elevation angle range
+      
+      spheric_integral = lambda theta, phi : np.cos(phi)
+      effective_area, error = dblquad(spheric_integral,
+                                    -elevation_radi, +elevation_radi, 
+                                    0, 2*azimuth_radi)
+      
+      print(f"effective_area is: {effective_area:.8f}")
+
+      gain_factor = (4 * np.pi) / effective_area
+      print(f"gain_factor : {gain_factor:.8f}")
+      gain_factor_dBsm = 20 * np.log10(gain_factor)
+
+      print(f"gain_factor_dBsm : {gain_factor_dBsm:.8f}")
+
+      RCS_with_const_dBsm = 10 * np.log10(RCS_with_const) 
+
+      RCS_with_const_gain_dbsm = RCS_with_const_dBsm - gain_factor_dBsm
+
+      print(f" RCS in dBsm {RCS_with_const_gain_dbsm}")
+   
+      return RCS_with_const_gain_dbsm, gain_factor_dBsm
+
+
+def simulate_corner_multipath(image_width, image_height, Oversamp_factor, Wavelength, 
+                      rx_antenna_rad, From_vector, look_at_front, vec_up, azimuth_angle, elevation_angle,
+                      mesh_angle_r, mesh_angle_up, Obj_range, render_mode_type, diff_const, RCS_const):
+
+   renderer = Renderer()
+   render_mode = getattr(RenderMode, render_mode_type)
+
+   script_directory = os.path.dirname(__file__)
+   content_directory = os.path.join(script_directory, "../example-files/Avinash_RCS/Corner_multipath/")#
+   obj_filename = os.path.join(content_directory, "corner_multipath_with_gnd_35cm.obj")#Corner_MOM24_mesh,Corner_MOM24_mesh, Corner_MOM24_withmetal , Corner_7cm
+   load_Object(renderer, content_directory, obj_filename, mesh_angle_r, mesh_angle_up, diff_const)
+
+   radiation_pattern_filename = os.path.join(script_directory, "../example-files/Radiation_pattern_new.txt")
+   #radiation_pattern_filename = os.path.join(script_directory, "../example-files/test_radiation_pattern.txt")
+   radiation_pattern, phi_axis, theta_axis = load_radiation_pattern_from_cst(radiation_pattern_filename)
+   #plot_radiation_pattern_3d(radiation_pattern, phi_axis, theta_axis, subsampling_factor=8)
+   #plt.show()
+
+   if render_mode == RenderMode.RENDER_MODE_GRAPHICS:
+      renderer.set_camera(From_vector, look_at_front, vec_up)
+      renderer.set_render_mode(render_mode)
+      renderer.set_image_size(image_width, image_height)
+      renderer.set_oversampling_factor(Oversamp_factor)
+      renderer.initialize()
+      renderer.render()
+      image = renderer.get_image()
+      image_array = Image.fromarray(image)
+      render_directory = os.path.join(script_directory, "../example-scripts/Avinash_render_images/")
+      print("Image stored in RCS_corner_multipath")
+
+      os.makedirs(render_directory, exist_ok=True)
+
+      image_path = os.path.join(render_directory, "RCS_corner_multipath.png")
+
+      image_array.save(image_path)
+      
+   elif render_mode == RenderMode.RENDER_MODE_RAYTARGET_COMP:
+      # This mode supports accurate Doppler and Radiation-Patterns
+      
+      tx_antennas, rx_antennas = load_antennas_for_imaging_iwr6843AOP(From_vector, look_at_front, vec_up,
+                                         radiation_pattern, phi_axis, theta_axis, Wavelength, rx_antenna_rad, azimuth_angle, elevation_angle)
+      renderer.add_rx_antenna(rx_antennas[0])
+      renderer.add_tx_antenna(tx_antennas[0])
+      renderer.set_ray_depth(4)
+      renderer.set_number_sequences(10)
+      renderer.set_render_mode(render_mode)
+      renderer.set_image_size(image_width, image_height)
+      renderer.set_oversampling_factor(Oversamp_factor)
+      time_start = time.time()
+      renderer.initialize()
+      renderer.render()
+      renderer.create_channel_info()
+      time_end = time.time()
+      # print(f"ray tracing simulation took: {time_end - time_start:.2f} seconds")
+      ray_channel_info = renderer.get_channel_info()
+
+      time_start = time.time()
+      trace_data = create_trace_data_from_ray_channel_info(ray_channel_info, tx_antennas, rx_antennas, apply_radiation_pattern=True, all_radiation_patterns_equal=True)
+      time_end = time.time()
+      print(f"creating trace data took: {time_end - time_start:.2f} seconds")
+
+      number_rays = trace_data.traces_dict[0,0].shape[1]
+      print(f"received {number_rays} rays")
+      filter_vectors = [ (0, 0, 1), (0, 1, 0), (0, 1, 1), (0, 1, -1), (1, 0, 0), (1, 0, 1), (1, 0, -1), (1, 1, 0), (1, 1, 1), (1, 1, -1),  (1, -1, -1)] 
+      
+      # iterate over mesh ids
+      # for mesh_id in ray_channel_info.mesh_ids:
+      #        if isinstance(ray_channel_info.mesh_ids, list) and ray_channel_info.mesh_ids in filter_vectors:
+      #           # Initialize the counter dictionary
+
+      vector_counts = {vec: 0 for vec in filter_vectors}
+      direct_rays = 0
+      mesh_ids = [0,1]
+      multipath_rays = 0
+
+      # Iterate over ray_channel_info objects
+      for mesh_id in ray_channel_info.mesh_ids:
+         if [0,0,-1] in (mesh_id):
+            # tuple_mesh_ids = tuple(ray_channel_info.mesh_ids)  # Convert list to tuple for comparison
+            # if filter_vectors in tuple_mesh_ids:
+            multipath_rays += 1
+            # vector_counts[tuple_mesh_ids] += 1
+         else:
+            direct_rays += 1
+
+      # # If you need the total count of matching rays (x)
+      # multipath_rays = sum(vector_counts.values())
+      print(f"Total number of multipath rays: {multipath_rays}")
+      print(f"Total number of direct rays: {direct_rays}")
+      total_num_rays = multipath_rays + direct_rays
+      print(f"Total number of rays: {total_num_rays}")
+
+      Pt = (image_width*image_height)*Oversamp_factor
+      Power_ratio = (number_rays/Pt)**2
+
+      RCS_without_const = Power_ratio*(4*np.pi*((Obj_range)**2))**2
+      
+      RCS_with_const = RCS_without_const*RCS_const
+
+      print(f"RCS_with_const {RCS_with_const}")
+
+      azimuth_radi = np.deg2rad(azimuth_angle)
+      elevation_radi = np.deg2rad(elevation_angle)
+
+      #  Performing the double integral over the azimuth and elevation
+      effective_area, error = dblquad(lambda phi,theta:  np.cos(theta),
+                                -azimuth_radi / 2, azimuth_radi / 2,  # Azimuth angle range
+                                lambda x: -elevation_radi / 2, lambda x: elevation_radi / 2)  # Elevation angle range
+
+      # Calculate the gain factor
+      gain_factor = (4 * np.pi) / effective_area
+
+      print(f"gain_factor : {gain_factor:.4f}")
+
+      RCS_with_const_dBsm = 10 * np.log10(RCS_with_const)
+
+      print(f" RCS in dBsm {RCS_with_const_dBsm}") 
+
+      return RCS_with_const_dBsm, gain_factor
+
+
+def simulate_corner(image_width, image_height, Oversamp_factor, Wavelength, 
+                      rx_antenna_rad, From_vector, look_at_front, vec_up, azimuth_angle, elevation_angle,
+                      mesh_angle_r, mesh_angle_up, Obj_range, render_mode_type, diff_const, RCS_const):
+
+   renderer = Renderer()
+   render_mode = getattr(RenderMode, render_mode_type)
+   
+   # load mesh from outside
+
+   script_directory = os.path.dirname(__file__)
+   content_directory = os.path.join(script_directory, "../example-files/Avinash_RCS/Corner/")#
+   obj_filename = os.path.join(content_directory, "Corner_15cm.obj")#Corner_MOM24_mesh,Corner_MOM24_mesh, Corner_MOM24_withmetal , Corner_7cm
+   #print("start loading campus scene")
+   load_Object(renderer, content_directory, obj_filename, mesh_angle_r, mesh_angle_up, diff_const)
+
+   radiation_pattern_filename = os.path.join(script_directory, "../example-files/Radiation_pattern_new.txt")
+   radiation_pattern, phi_axis, theta_axis = load_radiation_pattern_from_cst(radiation_pattern_filename)
+   #plot_radiation_pattern_3d(radiation_pattern, phi_axis, theta_axis, subsampling_factor=8)
+   #plt.show()
+
+   
+   if render_mode == RenderMode.RENDER_MODE_GRAPHICS:
+  
+      renderer.set_camera(From_vector, look_at_front, vec_up)
+      renderer.set_render_mode(render_mode)
+      renderer.set_image_size(image_width, image_height)
+      renderer.set_oversampling_factor(Oversamp_factor)
+      renderer.initialize()
+      renderer.render()
+      image = renderer.get_image()
+      image_array = Image.fromarray(image)
+      render_directory = os.path.join(script_directory, "../example-scripts/Avinash_render_images/")
+      print("Image stored in RCS_corner")
+
+      os.makedirs(render_directory, exist_ok=True)
+
+      image_path = os.path.join(render_directory, "RCS_corner.png")
+
+      image_array.save(image_path)
+      
+   elif render_mode == RenderMode.RENDER_MODE_RAYTARGET_COMP:
+      # This mode supports accurate Doppler and Radiation-Patterns
+      
+      tx_antennas, rx_antennas = load_antennas_for_imaging_iwr6843AOP(From_vector, look_at_front, vec_up,
+                                         radiation_pattern, phi_axis, theta_axis, Wavelength, rx_antenna_rad, azimuth_angle, elevation_angle)
+      print("Loading antenna for imaging completed")
+      renderer.add_rx_antenna(rx_antennas[0])
+      renderer.add_tx_antenna(tx_antennas[0])
+      renderer.set_ray_depth(4)
+      renderer.set_number_sequences(10)
+      renderer.set_render_mode(render_mode)
+      renderer.set_image_size(image_width, image_height)
+      renderer.set_oversampling_factor(Oversamp_factor)
+      time_start = time.time()
+      renderer.initialize()
+      renderer.render()
+      print("Render complete")
+      renderer.create_channel_info()
+      time_end = time.time()
+      print(f"ray tracing simulation took: {time_end - time_start:.2f} seconds")
+      ray_channel_info = renderer.get_channel_info()
+      time_start = time.time()
+      trace_data = create_trace_data_from_ray_channel_info(ray_channel_info, tx_antennas, rx_antennas, apply_radiation_pattern=True, all_radiation_patterns_equal=True)
+      time_end = time.time()
+      print(f"creating trace data took: {time_end - time_start:.2f} seconds")
+
+      number_rays = trace_data.traces_dict[0,0].shape[1]
+      print(f"received {number_rays} rays")
+
+      Pt = (image_width*image_height)*Oversamp_factor
+      Power_ratio = (number_rays/Pt)**2
+
+      RCS_without_const = Power_ratio*(4*np.pi*((Obj_range)**2))**2
+      
+      RCS_with_const = RCS_without_const*RCS_const
+
+      print(f"RCS_with_const {RCS_with_const}")
+
+      azimuth_radi = np.deg2rad(azimuth_angle)
+      elevation_radi = np.deg2rad(elevation_angle)
+
+      #  Performing the double integral over the azimuth and elevation
+      effective_area, error = dblquad(lambda phi,theta:  np.cos(theta),
+                                -azimuth_radi / 2, azimuth_radi / 2,  # Azimuth angle range
+                                lambda x: -elevation_radi / 2, lambda x: elevation_radi / 2)  # Elevation angle range
+
+      # Calculate the gain factor
+      gain_factor = (4 * np.pi) / effective_area
+
+      print(f"gain_factor : {gain_factor:.4f}")
+
+      RCS_with_const_dBsm = 10 * np.log10(RCS_with_const)
+
+      print(f" RCS in dBsm {RCS_with_const_dBsm}") 
+
+      return RCS_with_const_dBsm, gain_factor
+
+
+def simulate_sphere(image_width, image_height, Oversamp_factor, Wavelength, 
+                     rx_antenna_rad, From_vector, look_at_front, vec_up, azimuth_angle_rad,elevation_angle,
+                     mesh_angle_r, mesh_angle_up, Obj_range, render_mode_type, diff_const, RCS_const):
+
+   renderer = Renderer()
+   render_mode = getattr(RenderMode, render_mode_type)
+   print(f"The diff_const is {diff_const}")
+   # load mesh from outside
+
+   script_directory = os.path.dirname(__file__)
+   content_directory = os.path.join(script_directory, "../example-files/Avinash_RCS/Sphere/")
+   obj_filename = os.path.join(content_directory, "sphere_15cm.obj")#Avinash_sphere, Spehere_RCS_metal
+   #print("start loading campus scene")
+   load_Object(renderer, content_directory, obj_filename, mesh_angle_r, mesh_angle_up, diff_const)
+
+   radiation_pattern_filename = os.path.join(script_directory, "../example-files/Radiation_pattern_new.txt")
+   radiation_pattern, phi_axis, theta_axis = load_radiation_pattern_from_cst(radiation_pattern_filename)
+   plot_radiation_pattern_3d(radiation_pattern, phi_axis, theta_axis)
+   plt.show()
+
+   if render_mode == RenderMode.RENDER_MODE_GRAPHICS:
+      renderer.set_camera(From_vector, look_at_front, vec_up)
+      renderer.set_render_mode(render_mode)
+      renderer.set_image_size(image_width, image_height)
+      renderer.set_oversampling_factor(Oversamp_factor)
+      renderer.initialize()
+      renderer.render()
+      image = renderer.get_image()
+      image_array = Image.fromarray(image)
+      print("Image stored in RCS_sphere_5cm")
+      image_array.save("RCS_sphere_5cm.png")
+   elif render_mode == RenderMode.RENDER_MODE_RAYTARGET_COMP:
+      # This mode supports accurate Doppler and Radiation-Patterns
+      
+      tx_antennas, rx_antennas = load_antennas_for_imaging_iwr6843AOP(From_vector, look_at_front, vec_up, radiation_pattern, phi_axis, theta_axis, Wavelength, rx_antenna_rad, azimuth_angle_rad, elevation_angle)
+
+      print("Loading antenna for imaging completed")
+      renderer.add_rx_antenna(rx_antennas[0])
+      renderer.add_tx_antenna(tx_antennas[0])
+      renderer.set_ray_depth(4)
+      renderer.set_number_sequences(10)
+      renderer.set_render_mode(render_mode)
+      renderer.set_image_size(image_width, image_height)
+      renderer.set_oversampling_factor(Oversamp_factor)
+      time_start = time.time()
+      renderer.initialize()
+      renderer.render()
+      print("Render complete")
+      renderer.create_channel_info()
+      time_end = time.time()
+      print(f"ray tracing simulation took: {time_end - time_start:.2f} seconds")
+      ray_channel_info = renderer.get_channel_info()
+      time_start = time.time()
+      trace_data = create_trace_data_from_ray_channel_info(ray_channel_info, tx_antennas, rx_antennas, apply_radiation_pattern=True, all_radiation_patterns_equal=True)
+      time_end = time.time()
+      print(f"creating trace data took: {time_end - time_start:.2f} seconds")
+
+      number_rays = trace_data.traces_dict[0,0].shape[1]
+      print(f"received {number_rays} rays")
+
+      Pt = (image_width*image_height)*Oversamp_factor
+      Power_ratio = (number_rays/Pt)**2
+      RCS_without_const = Power_ratio*(4*np.pi*(Obj_range**2))**2
+      print(f" RCS without const factor linear {RCS_without_const}")
+      RCS_with_const = RCS_without_const * RCS_const
+      RCS_with_const_dBsm = 10 * np.log10(RCS_with_const) 
+      print(f" RCS with const factor dBsm {RCS_with_const_dBsm}") 
+      return RCS_with_const_dBsm
+
+def simulate_human(image_width, image_height, Oversamp_factor, Wavelength, 
+                     rx_antenna_rad, From_vector, look_at_front, vec_up, azimuth_angle_rad,elevation_angle,
+                     mesh_angle_r, mesh_angle_up, Obj_range, render_mode_type, diff_const, RCS_const):
+
+   renderer = Renderer()
+   render_mode = getattr(RenderMode, render_mode_type)
+   print(f"The diff_const is {diff_const}")
+   # load mesh from outside
+
+   script_directory = os.path.dirname(__file__)
+   content_directory = os.path.join(script_directory, "../example-files/Avinash_RCS/Human/")
+   obj_filename = os.path.join(content_directory, "Peter_RCS.obj")#Avinash_sphere, Spehere_RCS_metal
+   #print("start loading campus scene")
+   load_Object(renderer, content_directory, obj_filename, mesh_angle_r, mesh_angle_up, diff_const)
+
+   radiation_pattern_filename = os.path.join(script_directory, "../example-files/Radiation_pattern_new.txt")
+   radiation_pattern, phi_axis, theta_axis = load_radiation_pattern_from_cst(radiation_pattern_filename)
+
+
+   if render_mode == RenderMode.RENDER_MODE_GRAPHICS:
+      renderer.set_camera(From_vector, look_at_front, vec_up)
+      renderer.set_render_mode(render_mode)
+      renderer.set_image_size(image_width, image_height)
+      renderer.set_oversampling_factor(Oversamp_factor)
+      renderer.initialize()
+      renderer.render()
+      image = renderer.get_image()
+      image_array = Image.fromarray(image)
+
+      render_directory = os.path.join(script_directory, "../example-scripts/Avinash_render_images/")
+      print("Image stored in RCS_human")
+
+      os.makedirs(render_directory, exist_ok=True)
+
+      # Define the full path to the image file
+      image_path = os.path.join(render_directory, "RCS_human.png")
+
+      # Save the image to the specified directory
+      image_array.save(image_path)
+
+   elif render_mode == RenderMode.RENDER_MODE_RAYTARGET_COMP:
+      # This mode supports accurate Doppler and Radiation-Patterns
+      
+      tx_antennas, rx_antennas = load_antennas_for_imaging_iwr6843AOP(From_vector, look_at_front, vec_up, radiation_pattern, phi_axis, theta_axis, Wavelength, rx_antenna_rad, azimuth_angle_rad, elevation_angle)
+
+      print("Loading antenna for imaging completed")
+      renderer.add_rx_antenna(rx_antennas[0])
+      renderer.add_tx_antenna(tx_antennas[0])
+      renderer.set_ray_depth(4)
+      renderer.set_number_sequences(10)
+      renderer.set_render_mode(render_mode)
+      renderer.set_image_size(image_width, image_height)
+      renderer.set_oversampling_factor(Oversamp_factor)
+      time_start = time.time()
+      renderer.initialize()
+      renderer.render()
+      print("Render complete")
+      renderer.create_channel_info()
+      time_end = time.time()
+      print(f"ray tracing simulation took: {time_end - time_start:.2f} seconds")
+      ray_channel_info = renderer.get_channel_info()
+      time_start = time.time()
+      trace_data = create_trace_data_from_ray_channel_info(ray_channel_info, tx_antennas, rx_antennas, apply_radiation_pattern=True, all_radiation_patterns_equal=True)
+      time_end = time.time()
+      print(f"creating trace data took: {time_end - time_start:.2f} seconds")
+
+      number_rays = trace_data.traces_dict[0,0].shape[1]
+      print(f"received {number_rays} rays")
+
+      Pt = (image_width*image_height)*Oversamp_factor
+      Power_ratio = (number_rays/Pt)**2
+      RCS_without_const = Power_ratio*(4*np.pi*(Obj_range**2))**2
+      print(f" RCS without const factor linear {RCS_without_const}")
+      RCS_with_const = RCS_without_const * RCS_const
+      RCS_with_const_dBsm = 10 * np.log10(RCS_with_const) 
+      print(f" RCS with const factor dBsm {RCS_with_const_dBsm}") 
+      gain_factor = 1
+      return RCS_with_const_dBsm, gain_factor
+
+def save_to_json(Obj_range, mesh_angle_r, mesh_angle_up, RCS_with_const_dBsm, gain_factor, json_filename, Oversamp_factor, rx_antenna_rad, azimuth_angle, elevation_angle,diff_const, specification):
+    data = {'Measurements': []}
+
+    # Attempt to open the file and read existing data
+    if os.path.exists(json_filename) and os.path.getsize(json_filename) > 0:
+      try:
+         with open(json_filename, 'r') as file:
+               existing_data = json.load(file)
+               if 'Measurements' in existing_data:
+                  data['Measurements'] = existing_data['Measurements']
+               else:
+                  print("No 'Measurements' key in JSON file. Initializing with empty list.")
+      except (FileNotFoundError, json.JSONDecodeError):
+         print(f"Error reading {json_filename}. Starting with an empty dataset.")
+
+    # Create a new entry
+    new_entry = {
+        'Specification': specification,
+        'Obj_range': Obj_range,
+        'RCS_with_const_dBsm': RCS_with_const_dBsm,
+        'Oversamp_factor': Oversamp_factor,
+        'rx_antenna_rad': rx_antenna_rad,
+        'azimuth_angle': azimuth_angle,
+        'elevation_angle' :elevation_angle,
+        'mesh_angle_r': mesh_angle_r,
+        'mesh_angle_up': mesh_angle_up,
+        'diff_const':diff_const,
+        'gain_factor':gain_factor
+    }
+    data['Measurements'].append(new_entry)
+
+    # Write the updated or new data back to the file
+    with open(json_filename, 'w') as file:
+        json.dump(data, file, indent=4)
+    print(f"Data saved to {json_filename}")
+
+def main():
+
+   #Parameters for incident rays 
+   image_width = 1200
+   image_height = 600
+   Oversamp_factor = 60
+   Wavelength = 0.005
+
+   # variables to change the range and theta
+   Obj_range = 2
+
+   iterations = 44
+   range_azimuth = 2
+   rx_antenna_rad = 0.3
+
+
+   look_at_front =  np.array([0.0, 0, 0.0])
+   vec_up = np.array([0.0, 0.0, 1.0]) 
+   
+   RCS_const = 0
+   # Enter the type of the object (plate, sphere, corner)
+   Object = "plate".lower()
+
+   # adjusted for smaller gpus
+   if Object == "human":
+      render_mode_type = "RENDER_MODE_GRAPHICS"   #RENDER_MODE_RAYTARGET_COMP,  RENDER_MODE_GRAPHICS
+      mesh_angle_r = 0
+      mesh_angle_up = 0
+      obj_width = 1.13
+      obj_length = 1.85
+      diff_const = 0.3
+      RCS_const = 0.3164  #1.8440
+      # From_vector = np.array([Obj_range, 0.0, 0.0])
+      azimuth_angle =  calculate_azimuth_angle(obj_width, range_azimuth)
+      elevation_angle =  calculate_elevation_angle(obj_length, range_azimuth)
+      print(f"The azimuth angle is set to {azimuth_angle:.2f} degrees.")
+
+      script_directory = os.path.dirname(__file__)
+      jsonfile_directory = os.path.join(script_directory, "../example-scripts/Avinash_json_files/Human_Json")
+      json_filename = os.path.join(jsonfile_directory, "RCS_human_angle_results.json")
+      for i in range(iterations):
+         mesh_angle_up += 10
+         From_vector = np.array([0.0, Obj_range, 0])
+         print(f"The mesh_angle_r is {mesh_angle_r:.2f}")
+         simulate_human(image_width, image_height, Oversamp_factor, Wavelength, 
+                      rx_antenna_rad, From_vector, look_at_front, vec_up, azimuth_angle,elevation_angle,
+                      mesh_angle_r, mesh_angle_up, Obj_range, render_mode_type, diff_const, RCS_const)
+
+         time.sleep(4)
+         # RCS_with_const_dBsm, gain_factor = 
+         # save_to_json(Obj_range, mesh_angle_r, mesh_angle_up, RCS_with_const_dBsm, gain_factor, json_filename, Oversamp_factor, rx_antenna_rad, azimuth_angle, elevation_angle, diff_const, specification)
+
+
+
+   # adjusted for smaller gpus
+   elif Object == "sphere":
+      render_mode_type = "RENDER_MODE_RAYTARGET_COMP"   #RENDER_MODE_RAYTARGET_COMP,  RENDER_MODE_GRAPHICS
+      mesh_angle_r = 0
+      mesh_angle_up = 0
+      obj_width = 0.1
+      obj_length = 0.1
+      diff_const = 0.25
+      RCS_const = 188.1575 #1.8440
+      # From_vector = np.array([Obj_range, 0.0, 0.0])
+      azimuth_angle =  calculate_azimuth_angle(obj_width, range_azimuth)
+      elevation_angle =  calculate_elevation_angle(obj_length, range_azimuth)
+      print(f"The azimuth angle is set to {azimuth_angle:.2f} degrees.")
+ 
+      script_directory = os.path.dirname(__file__)
+      jsonfile_directory = os.path.join(script_directory, "../example-scripts/Avinash_json_files/Sphere_Json")
+      json_filename = os.path.join(jsonfile_directory, "RCS_sphere_dist_results_auto.json")
+      for i in range(iterations):
+         Obj_range += 0
+         From_vector = np.array([Obj_range, 0.0, 0.0])
+         print(f"The Obj_range is {Obj_range:.2f}")
+         RCS_without_const_dBsm = simulate_sphere(image_width, image_height, Oversamp_factor, Wavelength, 
+                      rx_antenna_rad, From_vector, look_at_front, vec_up, azimuth_angle,elevation_angle,
+                      mesh_angle_r, mesh_angle_up, Obj_range, render_mode_type, diff_const, RCS_const)
+         time.sleep(4)
+         # save_to_json(Obj_range, mesh_angle_r, mesh_angle_up, RCS_without_const_dBsm, json_filename, Oversamp_factor, rx_antenna_rad, azimuth_angle)
+
+   
+   elif Object == "plate":
+      render_mode_type = "RENDER_MODE_RAYTARGET_COMP"   #RENDER_MODE_RAYTARGET_COMP,  RENDER_MODE_GRAPHICS
+      obj_width = 0.05
+      obj_length = 0.05
+      mesh_angle_r = 0
+      mesh_angle_up = 0
+      diff_const = 0.6
+      # rx_antenna_rad = 0.0
+      RCS_const = 0.3164 
+      specification= "RCS with gain new formula, azimuth and elevation but stored diff"
+
+      
+      azimuth_angle = calculate_azimuth_angle(obj_width, range_azimuth)
+      elevation_angle = calculate_elevation_angle(obj_length, range_azimuth)
+
+      script_directory = os.path.dirname(__file__)
+      jsonfile_directory = os.path.join(script_directory, "../example-scripts/Avinash_json_files/Plate_Json/")
+      json_filename = os.path.join(jsonfile_directory, "RCS_plate_gainfactor_data_new.json")
+      initial_azimuth_angle = 1.43
+      initial_elevation_angle = 1.43
+      # Run the process twice
+      # Run the process twice
+      for _ in range(2):
+         # Iterate over azimuth angles with increment of 2
+         for i in range(iterations):  # azimuth increments by 2
+            azimuth_angle = initial_azimuth_angle + i * 2
+            # For each azimuth angle, run elevation 20 times with increment of 2
+            for j in range(iterations):  # elevation increments by 2
+               elevation_angle = initial_elevation_angle + j * 2
+               print(f"The azimuth_angle is {azimuth_angle:.2f}")
+               print(f"The elevation_angle is {elevation_angle:.2f}")
+               # mesh_angle_r +=  0
+               # azimuth_angle += 0
+               # elevation_angle += 1
+               From_vector = np.array([Obj_range, 0.0, 0.0])
+               # print(f"The elevation_angle is set to {elevation_angle:.2f} degrees.")
+               RCS_with_const_dBsm, gain_factor = simulate_plate(image_width, image_height, Oversamp_factor, Wavelength, 
+                           rx_antenna_rad, From_vector, look_at_front, vec_up, azimuth_angle, elevation_angle,
+                           mesh_angle_r, mesh_angle_up,  Obj_range, render_mode_type, diff_const, RCS_const)
+               time.sleep(3)
+               save_to_json(Obj_range, mesh_angle_r, mesh_angle_up, RCS_with_const_dBsm, gain_factor, json_filename, Oversamp_factor, rx_antenna_rad, azimuth_angle, elevation_angle, diff_const, specification)
+
+
+
+   elif Object == "corner_multipath":
+
+      render_mode_type = "RENDER_MODE_RAYTARGET_COMP"   #RENDER_MODE_RAYTARGET_COMP,  RENDER_MODE_GRAPHICS
+      obj_width = 0.08
+      obj_length = 0.08
+      mesh_angle_r = 0
+      mesh_angle_up = 0
+      rx_antenna_rad = 0.3
+      diff_const = 0.0
+      RCS_const = 0.42465
+      specification = "RCS corner multipath with ground"
+      # From_vector = np.array([0.0, -(Obj_range), 0.0])
+      script_directory = os.path.dirname(__file__)
+      jsonfile_directory = os.path.join(script_directory, "../example-scripts/Avinash_json_files/Corner_multipath_Json/")
+      json_filename = os.path.join(jsonfile_directory, "RCS_corner_multipath_dist.json")
+      
+      
+      azimuth_angle =  calculate_azimuth_angle(obj_width, range_azimuth)
+      elevation_angle =  calculate_elevation_angle(obj_length, range_azimuth)
+      
+      for i in range(iterations):
+         Obj_range += 0
+         # azimuth_angle += 1
+         # elevation_angle += 1
+         print(f"The Obj_range is set to {Obj_range:.2f}")
+         print(f"The azimuth angle is set to {azimuth_angle:.2f} degrees.")
+         print(f"The elevation angle is set to {elevation_angle:.2f} degrees.")
+         # From_vector = np.array([0.0, -(Obj_range), 0.0])
+         print(f"The rx_antenna_rad is {rx_antenna_rad:.2f}")
+         From_vector = np.array([0.0, -(Obj_range), 0.0])
+         RCS_with_const_dBsm, gain_factor = simulate_corner_multipath(image_width, image_height, Oversamp_factor, Wavelength, 
+                       rx_antenna_rad, From_vector, look_at_front, vec_up, azimuth_angle, elevation_angle,
+                       mesh_angle_r, mesh_angle_up, Obj_range, render_mode_type, diff_const, RCS_const)
+         time.sleep(3)
+         save_to_json(Obj_range, mesh_angle_r, mesh_angle_up, RCS_with_const_dBsm, gain_factor, json_filename, Oversamp_factor, rx_antenna_rad, azimuth_angle, elevation_angle, diff_const, specification)
+
+
+
+   elif Object == "corner":
+      render_mode_type = "RENDER_MODE_RAYTARGET_COMP"   #RENDER_MODE_RAYTARGET_COMP,  RENDER_MODE_GRAPHICS
+      obj_width = 0.08
+      obj_length = 0.08
+      mesh_angle_r = 0
+      mesh_angle_up = 45
+      rx_antenna_rad = 0.3
+      diff_const = 0.0
+      RCS_const = 0.42465
+      # From_vector = np.array([0.0, -(Obj_range), 0.0])
+      script_directory = os.path.dirname(__file__)
+      jsonfile_directory = os.path.join(script_directory, "../example-scripts/Avinash_json_files/Corner_Json/")
+      json_filename = os.path.join(jsonfile_directory, "RCS_corner_vs_azimuth_elevation.json")
+   
+      azimuth_angle = 90#  calculate_azimuth_angle(obj_width, range_azimuth)
+      elevation_angle = 90# calculate_elevation_angle(obj_length, range_azimuth)
+
+      for i in range(iterations):
+         azimuth_angle += 0
+         elevation_angle += 0
+         print(f"The azimuth angle is set to {azimuth_angle:.2f} degrees.")
+         print(f"The elevation angle is set to {elevation_angle:.2f} degrees.")
+         # From_vector = np.array([0.0, -(Obj_range), 0.0])
+         print(f"The rx_antenna_rad is {rx_antenna_rad:.2f}")
+         From_vector = np.array([0.0, -(Obj_range), 0.0])
+         RCS_with_const_dBsm, gain_factor = simulate_corner(image_width, image_height, Oversamp_factor, Wavelength, 
+                       rx_antenna_rad, From_vector, look_at_front, vec_up, azimuth_angle, elevation_angle,
+                       mesh_angle_r, mesh_angle_up, Obj_range, render_mode_type, diff_const, RCS_const)
+         time.sleep(3)
+         # save_to_json(Obj_range, mesh_angle_r, mesh_angle_up, RCS_with_const_dBsm, gain_factor, json_filename, Oversamp_factor, rx_antenna_rad, azimuth_angle, elevation_angle, diff_const, specification)
+
+   else:
+      print("Invalid Object type.")
+      return
+   
+if __name__ == "__main__":
+   main()
+   print("Finished")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 23/5/2024
 
 import os

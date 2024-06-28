@@ -33,10 +33,10 @@ def read_data(txt_file):
 # Path to the text file
 azimuth_txt_file = 'D:/FAU Notes/4Master_Thesis/Simulation/Python_Directory/Py_plots_results_compare/LHFT_RCS_Results_Processing/azimuth_radiation_pattern.txt'
 elevation_txt_file = 'D:/FAU Notes/4Master_Thesis/Simulation/Python_Directory/Py_plots_results_compare/LHFT_RCS_Results_Processing/elevation_radiation_pattern.txt'
-Radiation_pattern_file = 'D:/FAU Notes/4Master_Thesis/Simulation/Python_Directory/Py_plots_results_compare/LHFT_RCS_Results_Processing/Radiation_pattern_new.txt'
+# Radiation_pattern_file = 'D:/FAU Notes/4Master_Thesis/Simulation/Python_Directory/Py_plots_results_compare/LHFT_RCS_Results_Processing/Radiation_pattern_new.txt'
 
 
-# Read the data from the file
+# Reading the data from the files mentioned above
 az_angles_rx1, az_values_rx1, az_angles_rx2, az_values_rx2, az_angles_rx3, az_values_rx3, az_angles_rx4, az_values_rx4 = read_data(azimuth_txt_file)
 el_angles_rx1, el_values_rx1, el_angles_rx2, el_values_rx2, el_angles_rx3, el_values_rx3, el_angles_rx4, el_values_rx4 = read_data(elevation_txt_file)
 

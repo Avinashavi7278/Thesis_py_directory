@@ -142,21 +142,30 @@ def plot_plate_diffu_angle(measurements):
 
 
 def plot_human_hori_RCS_angle(measurements):
-    # Extract Obj_range and RCS_without_const_dBsm from the measurements
+    # Extract mesh_angle_r and RCS_with_const_dBsm from the measurements
     theta = [entry['mesh_angle_r'] for entry in measurements]
     rcs_values = [entry['RCS_with_const_dBsm'] for entry in measurements]
 
     # Convert theta to radians
     theta_rad = np.deg2rad(theta)
-    # theta_rad = [angle * (3.141592653589793 / 180.0) for angle in theta]
 
     # Create a polar plot
     plt.figure(figsize=(12, 6))
     ax = plt.subplot(111, projection='polar')
-    ax.scatter(theta_rad, rcs_values, color='blue', s=5)
-    ax.set_title('Human RCS vs Angle (horizontal) ')
-    ax.set_ylim(-30, 0)
+    
+    # Add lines from the center to the first and last points
+    ax.plot([0, theta_rad[0]], [0, rcs_values[0]], color='blue', linestyle='--')
+    ax.plot([theta_rad[-1], 2*np.pi], [rcs_values[-1], 0], color='blue', linestyle='--')
+    
+    # Plot the dashed lines
+    ax.plot(theta_rad, rcs_values, color='blue', linestyle='--')
+    
+    ax.set_theta_direction(-1)  # Set the theta direction to clockwise
+    ax.set_theta_zero_location('N')  # Set 0 degrees to the top (12 o'clock position)
+    ax.set_title('Human RCS vs Angle (Horizontal)')
+    ax.set_ylim(-25, 0)
     ax.grid(True)
+    
     common_params = extract_common_params(measurements)
     if common_params:
         specs_text = (
@@ -166,24 +175,34 @@ def plot_human_hori_RCS_angle(measurements):
             f"- azimuth_angle: {common_params['azimuth_angle']}"
         )
         plt.figtext(0.73, 0.9, specs_text, fontsize=12, bbox=dict(facecolor='white', alpha=0.4))
+    
     plt.show()
 
+    
 def plot_human_verti_RCS_angle(measurements):
-    # Extract Obj_range and RCS_without_const_dBsm from the measurements
+    # Extract mesh_angle_up and RCS_with_const_dBsm from the measurements
     theta = [entry['mesh_angle_up'] for entry in measurements]
     rcs_values = [entry['RCS_with_const_dBsm'] for entry in measurements]
 
     # Convert theta to radians
     theta_rad = np.deg2rad(theta)
-    # theta_rad = [angle * (3.141592653589793 / 180.0) for angle in theta]
 
     # Create a polar plot
     plt.figure(figsize=(12, 6))
     ax = plt.subplot(111, projection='polar')
-    ax.scatter(theta_rad, rcs_values, color='blue', s=5)
-    ax.set_title('Human RCS vs Angle (verticle)')
-    ax.set_ylim(-30, 0)
+    
+    # Add lines from the center to the first and last points
+    ax.plot([0, theta_rad[0]], [0, rcs_values[0]], color='blue', linestyle='--')
+    ax.plot([theta_rad[-1], 2*np.pi], [rcs_values[-1], 0], color='blue', linestyle='--')
+    
+    # Plot the dashed lines
+    ax.plot(theta_rad, rcs_values, color='blue', linestyle='--')
+    
+    ax.set_theta_direction(-1)  # Set the theta direction to clockwise
+    ax.set_title('Human RCS vs Angle (vertical)')
+    ax.set_ylim(-60, 15)
     ax.grid(True)
+    
     common_params = extract_common_params(measurements)
     if common_params:
         specs_text = (
@@ -193,17 +212,20 @@ def plot_human_verti_RCS_angle(measurements):
             f"- azimuth_angle: {common_params['azimuth_angle']}"
         )
         plt.figtext(0.73, 0.9, specs_text, fontsize=12, bbox=dict(facecolor='white', alpha=0.4))
+    
     plt.show()
+
 
 
 def extract_common_params(measurements):
     # Extract common parameters from the first relevant entry
     for entry in measurements:
-        if entry.get('Specification') == 'RCS vs angle for normal plate':
+        if entry.get('Specification') == 'Cube RCS vs Angle new data':
             common_params = {
                 "Oversamp_factor": entry.get("Oversamp_factor"),
                 "rx_antenna_rad": entry.get("rx_antenna_rad"),
-                "azimuth_angle": entry.get("azimuth_angle")
+                "azimuth_angle": entry.get("azimuth_angle"),
+                "diff_const": entry.get("diff_const")
             }
             return common_params
     return None
@@ -214,7 +236,7 @@ def plot_plate_cube_diffu_angle(measurements):
     RCS_with_const_dBsm = []
 
     for entry in measurements:
-        if entry.get('Specification') == 'RCS vs angle for cube as a plate':
+        if entry.get('Specification') == "Cube RCS vs Angle new data":
             mesh_angle_r.append(entry.get('mesh_angle_r'))
             RCS_with_const_dBsm.append(entry.get('RCS_with_const_dBsm'))
 
@@ -226,7 +248,7 @@ def plot_plate_cube_diffu_angle(measurements):
     ax = plt.subplot(111, projection='polar')
     ax.scatter(theta_rad, RCS_with_const_dBsm, color='blue', s=5)
     ax.set_title('Cube RCS vs Angle')
-    ax.set_ylim(-200, -20)
+    ax.set_ylim(-200, -100)
     ax.grid(True)
 
     # Extract common parameters for displaying
@@ -236,11 +258,11 @@ def plot_plate_cube_diffu_angle(measurements):
             "Specifications:\n"
             f"- Oversamp_factor: {common_params['Oversamp_factor']}\n"
             f"- rx_antenna_rad: {common_params['rx_antenna_rad']}\n"
+            f"- diff_const: {common_params['diff_const']}\n"
         )
-        plt.figtext(0.73, 0.9, specs_text, fontsize=12, bbox=dict(facecolor='white', alpha=0.4))
+        plt.figtext(0.73, 0.85, specs_text, fontsize=12, bbox=dict(facecolor='white', alpha=0.4))
     
     plt.show()
-
 
 # def plot_plate_angle(measurements):
 #     # Extract mesh_angle_r and RCS_without_const_dBsm from the measurements
@@ -313,7 +335,7 @@ def main():
         plot_human_verti_RCS_angle(measurements)
 
     if Object == "plate_cube":
-        json_file = 'D:/FAU Notes/4Master_Thesis/Simulation/Python_Directory/Py_plots_results_compare/LHFT_RCS_Results_Processing/RCS_plate_angle_results_auto_Hdiff.json'
+        json_file = 'D:/FAU Notes/4Master_Thesis/Simulation/Python_Directory/Py_plots_results_compare/LHFT_RCS_Results_Processing/RCS_plate_angle_results_auto.json'
         measurements = load_data(json_file)
         plot_plate_cube_diffu_angle(measurements)
 
